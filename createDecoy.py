@@ -4,6 +4,7 @@ import sys
 import time
 import logging
 import threading
+import ctypes
 from logging.handlers import RotatingFileHandler
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
@@ -35,6 +36,7 @@ class Handler(LoggingEventHandler):
         super(LoggingEventHandler, self).on_deleted(event)
 
         print("Warning!")
+        ctypes.windll.user32.MessageBoxW(0, "Check log file.", "Warning!", 0)        
         what = 'directory' if event.is_directory else 'file'
         logging.info("Deleted %s: %s", what, event.src_path)
 
@@ -42,6 +44,7 @@ class Handler(LoggingEventHandler):
         super(LoggingEventHandler, self).on_modified(event)
         
         print("Warning!")
+        ctypes.windll.user32.MessageBoxW(0, "Check log file.", "Warning!", 0)        
         what = 'directory' if event.is_directory else 'file'
         logging.info("Modified %s: %s", what, event.src_path)
 
