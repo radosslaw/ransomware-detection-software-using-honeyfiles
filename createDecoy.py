@@ -1,45 +1,38 @@
 import os
 import pathlib
+import sys
+import time
+import logging
+from logging.handlers import RotatingFileHandler
+from watchdog.observers import Observer
+from watchdog.events import LoggingEventHandler
 
-def createDecoyFiles():
-    save_path = os.path.expanduser('~')
-    print(save_path)
-    decoy_name = "haslo.txt"
-    decoy_path = os.path.join(save_path, decoy_name)
-    print(decoy_path)
-    decoy = open(decoy_path, "w")
-    decoy.write("decoy password")
-    decoy.close()
+def createDecoyFiles(n):
+    startPath = os.path.expanduser("~\inż tests")
+    for i in range (n):
+        decoy_name = "haslo{}.txt".format(i)
+        decoy_path = os.path.join(startPath, decoy_name)
+        decoy = open(decoy_path, "w")
+        decoy.write("decoy{} password".format(i))
+        decoy.close()
 
+def monitor():
+    if __name__ == "__main__":
+        logging.basicConfig(handlers=[RotatingFileHandler('logs.log', maxBytes=100000, backupCount=10)],
+                            level=logging.INFO,
+                            format='%(asctime)s - %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S')
+        path = os.path.expanduser("~\inż tests")
+        event_handler = LoggingEventHandler()
+        observer = Observer()
+        observer.schedule(event_handler, path, recursive=True)
+        observer.start()
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            observer.stop()
+        observer.join()
     
-
-def getTimestamps(filename):
-    fname = pathlib.Path(filename)
-    stats = fname.stat()
-    if not fname.exists(): # File deleted
-        return []
-    return(stats.st_ctime,stats.st_mtime,stats.st_atime)
-    
-
-def checkTimestamps(filename,create,modify,access):
-    stats = getTimestamps(filename)
-    if len(stats) == 0:
-        return False # File deleted
-    (ctime,mtime,atime) = stats
-    if float(create) != float(ctime):
-        return False    # File creation time is incorrect
-    elif float(modify) != float(mtime):
-        return False    # File modify time is incorrect
-    elif float(access) != float(atime):
-        return False    # File access time is incorrect
-    return True
-
-def checkDecoyFiles():
-    with open("decoys.txt","r") as f:
-        for line in f:
-            vals = line.rstrip().split(",")
-            if not checkTimestamps(vals[0],vals[1],vals[2],vals[3]):
-                print("%s has been tampered with." % vals[0])
-
-createDecoyFiles()
-checkDecoyFiles()
+createDecoyFiles(3)
+monitor()
