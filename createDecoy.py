@@ -5,6 +5,7 @@ import time
 import logging
 import threading
 import ctypes
+import smtplib, ssl
 from logging.handlers import RotatingFileHandler
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
@@ -35,6 +36,7 @@ class Handler(LoggingEventHandler):
     def on_deleted(self, event):
         super(LoggingEventHandler, self).on_deleted(event)
 
+        emailNotification()
         print("Warning!")
         ctypes.windll.user32.MessageBoxW(0, "Check log file.", "Warning!", 0)        
         what = 'directory' if event.is_directory else 'file'
@@ -43,6 +45,7 @@ class Handler(LoggingEventHandler):
     def on_modified(self, event):
         super(LoggingEventHandler, self).on_modified(event)
         
+        emailNotification()
         print("Warning!")
         ctypes.windll.user32.MessageBoxW(0, "Check log file.", "Warning!", 0)        
         what = 'directory' if event.is_directory else 'file'
@@ -65,6 +68,21 @@ def monitor():
         observer.stop()
     observer.join()
         
-    
+def emailNotification():
+    port = 465  # For SSL
+    smtp_server = "smtp.gmail.com"
+    sender_email = "ransomdetct@gmail.com"
+    password = "1Q5t0p-["
+    receiver_email = "radoslaw.motyka3@gmail.com"
+    subject = "Ransomware Detection Alarm"
+    text = "Warning! Suspicious activity detected. Check your log file."
+    message = 'Subject: {}\n\n{}'.format(subject, text)
+        
+    # Create a secure SSL context
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, message)
+        
 createDecoyFiles(3)
 monitor()
