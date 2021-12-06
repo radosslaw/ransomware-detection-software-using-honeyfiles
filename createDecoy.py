@@ -1,23 +1,23 @@
 import os
-import pathlib
-import sys
+import psutil
+import numbers
+import subprocess
+import threading
 import time
 import logging
-import threading
 import ctypes
 import smtplib, ssl
+import winsound
+from pathlib import Path
 from logging.handlers import RotatingFileHandler
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
 
-def createDecoyFiles(n):
-    startPath = os.path.expanduser("~\inż tests")
-    for i in range (n):
-        decoy_name = "haslo{}.txt".format(i)
-        decoy_path = os.path.join(startPath, decoy_name)
-        decoy = open(decoy_path, "w")
-        decoy.write("decoy{} password".format(i))
-        decoy.close()
+try:
+    from subprocess import DEVNULL
+except ImportError:
+    import os
+    DEVNULL = open(os.devnull, 'wb')
 
 class Handler(LoggingEventHandler):
     def on_moved(self, event):
@@ -36,44 +36,77 @@ class Handler(LoggingEventHandler):
     def on_deleted(self, event):
         super(LoggingEventHandler, self).on_deleted(event)
 
-        emailNotification()
-        print("Warning!")
-        ctypes.windll.user32.MessageBoxW(0, "Check log file.", "Warning!", 0)        
         what = 'directory' if event.is_directory else 'file'
         logging.info("Deleted %s: %s", what, event.src_path)
+        
+        emailNotification()
+        print("Warning!")
+        threading.Thread(target=winsound.PlaySound("IDoNotExist", winsound.SND_FILENAME)).start()     
+        ctypes.windll.user32.MessageBoxW(0, "Check log file.", "Warning!", 0x1000)
 
     def on_modified(self, event):
         super(LoggingEventHandler, self).on_modified(event)
         
-        emailNotification()
-        print("Warning!")
-        ctypes.windll.user32.MessageBoxW(0, "Check log file.", "Warning!", 0)        
         what = 'directory' if event.is_directory else 'file'
         logging.info("Modified %s: %s", what, event.src_path)
+        
+        file = event.src_path[27:]
+        fpath = Path(event.src_path)
+        print(file)
+        print(get_pids_open(file))
+        #has_handle(fpath)
+        
+        emailNotification()
+        print("Warning!")
+        threading.Thread(target=winsound.PlaySound("", winsound.SND_FILENAME)).start()
+        ctypes.windll.user32.MessageBoxW(0, "Check log file.", "Warning!", 0x1000)
+        
+def createDecoyFiles(n):
+    startPath = os.path.expanduser("~\inz tests")
+    for i in range (n):
+        decoy_name = "haslo{}.txt".format(i)
+        decoy_path = os.path.join(startPath, decoy_name)
+        decoy = open(decoy_path, "w")
+        decoy.write("decoy{} password".format(i))
+        decoy.close()
+'''        
+def has_handle(fpath):
+    for proc in psutil.process_iter():
+        try:
+            for item in proc.open_files():
+                if fpath == Path(item.path):
+                    print(item)
+                    print(proc.id)
+                    return True
+        except Exception:
+            pass
 
-def monitor():
-    logging.basicConfig(handlers=[RotatingFileHandler('logs.log', maxBytes=100000, backupCount=10)],
-                        level=logging.INFO,
-                        format='%(asctime)s - %(message)s',
-                        datefmt='%Y-%m-%d %H:%M:%S')
-    path = os.path.expanduser("~\inż tests")
-    event_handler = Handler()
-    observer = Observer()
-    observer.schedule(event_handler, path, recursive=True)
-    observer.start()
+    return False
+'''
+def get_pids_open(*file):
+    pids = set()
     try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+        out = subprocess.check_output(['.\handle64']+list(file), stderr=open('stderrOutput.txt', 'w'), shell=True).decode('utf8')
+    except Exception as e:
+        out = e.output.decode('utf8')
+    if not out.strip():
+        return []
+    #print(out)
+    lines = str(out)
+    #print(lines)
+    start = lines.index("pid") + len("pid") + 2
+    end = lines.index("type")
+    pid = lines[start:end]
+    #print(pid)
+    pids.add(int(pid))
+    return list(pids)
         
 def emailNotification():
     port = 465  # For SSL
     smtp_server = "smtp.gmail.com"
     sender_email = "ransomdetct@gmail.com"
     password = "1Q5t0p-["
-    receiver_email = "radoslaw.motyka3@gmail.com"
+    receiver_email = "ransomdetct@gmail.com"
     subject = "Ransomware Detection Alarm"
     text = "Warning! Suspicious activity detected. Check your log file."
     message = 'Subject: {}\n\n{}'.format(subject, text)
@@ -83,6 +116,24 @@ def emailNotification():
     with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
         server.login(sender_email, password)
         server.sendmail(sender_email, receiver_email, message)
-        
+
+def monitor():
+    logging.basicConfig(handlers=[RotatingFileHandler('logs.log', maxBytes=100000, backupCount=10)],
+                        level=logging.INFO,
+                        format='%(asctime)s - %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
+    path = os.path.expanduser("~\inz tests")
+    event_handler = Handler()
+    observer = Observer()
+    observer.schedule(event_handler, path, recursive=True)
+
+    observer.start()
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
+                
 createDecoyFiles(3)
 monitor()
