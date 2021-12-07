@@ -1,6 +1,6 @@
 import os
+import signal
 import psutil
-import numbers
 import subprocess
 import threading
 import time
@@ -8,7 +8,6 @@ import logging
 import ctypes
 import smtplib, ssl
 import winsound
-from pathlib import Path
 from logging.handlers import RotatingFileHandler
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
@@ -50,16 +49,18 @@ class Handler(LoggingEventHandler):
         what = 'directory' if event.is_directory else 'file'
         logging.info("Modified %s: %s", what, event.src_path)
         
-        file = event.src_path[27:]
-        fpath = Path(event.src_path)
+        file = event.src_path[-10:]
         print(file)
-        print(get_pids_open(file))
-        #has_handle(fpath)
-        
-        emailNotification()
-        print("Warning!")
-        threading.Thread(target=winsound.PlaySound("", winsound.SND_FILENAME)).start()
-        ctypes.windll.user32.MessageBoxW(0, "Check log file.", "Warning!", 0x1000)
+        pid = get_pid(file)
+        print(pid)
+        name = get_process_name(pid)
+        print(name)
+        if check_process(name) is False:
+            os.kill(pid, signal.SIGTERM)
+            emailNotification()
+            print("Warning!")
+            threading.Thread(target=winsound.PlaySound("", winsound.SND_FILENAME)).start()
+            ctypes.windll.user32.MessageBoxW(0, "Check log file.", "Warning!", 0x1000) 
         
 def createDecoyFiles(n):
     startPath = os.path.expanduser("~\inz tests")
@@ -83,8 +84,7 @@ def has_handle(fpath):
 
     return False
 '''
-def get_pids_open(*file):
-    pids = set()
+def get_pid(*file):
     try:
         out = subprocess.check_output(['.\handle64']+list(file), stderr=open('stderrOutput.txt', 'w'), shell=True).decode('utf8')
     except Exception as e:
@@ -94,12 +94,29 @@ def get_pids_open(*file):
     #print(out)
     lines = str(out)
     #print(lines)
-    start = lines.index("pid") + len("pid") + 2
-    end = lines.index("type")
-    pid = lines[start:end]
-    #print(pid)
-    pids.add(int(pid))
-    return list(pids)
+    startpid = lines.index("pid") + len("pid") + 2
+    endpid = lines.index("type")
+    stringpid = lines[startpid:endpid]
+    #print(stringpid)
+    pid = int(stringpid)
+    return pid
+
+def get_process_name(pid):
+    process = psutil.Process(pid)
+    process_name = process.name()
+    return process_name
+
+def get_pid_by_name(name):
+    process = psutil.Process(name)
+    pid = process.pid()
+    return pid
+
+def check_process(name):
+    standard  = open("standard_processes.txt").readlines()
+    if name in standard:
+        return True
+    else:
+        return False
         
 def emailNotification():
     port = 465  # For SSL
