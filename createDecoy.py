@@ -61,32 +61,10 @@ class Handler(LoggingEventHandler):
             print("Warning!")
             threading.Thread(target=winsound.PlaySound("", winsound.SND_FILENAME)).start()
             ctypes.windll.user32.MessageBoxW(0, "Check log file.", "Warning!", 0x1000) 
-        
-def createDecoyFiles(n):
-    startPath = os.path.expanduser("~\inz tests")
-    for i in range (n):
-        decoy_name = "haslo{}.txt".format(i)
-        decoy_path = os.path.join(startPath, decoy_name)
-        decoy = open(decoy_path, "w")
-        decoy.write("decoy{} password".format(i))
-        decoy.close()
-'''        
-def has_handle(fpath):
-    for proc in psutil.process_iter():
-        try:
-            for item in proc.open_files():
-                if fpath == Path(item.path):
-                    print(item)
-                    print(proc.id)
-                    return True
-        except Exception:
-            pass
 
-    return False
-'''
 def get_pid(*file):
     try:
-        out = subprocess.check_output(['.\handle64']+list(file), stderr=open('stderrOutput.txt', 'w'), shell=True).decode('utf8')
+        out = subprocess.check_output(['.\handle64']+list(file), stderr=open('stderrOutput.txt', 'w', errors='ignore'), shell=True).decode('utf8')
     except Exception as e:
         out = e.output.decode('utf8')
     if not out.strip():
@@ -134,6 +112,15 @@ def emailNotification():
         server.login(sender_email, password)
         server.sendmail(sender_email, receiver_email, message)
 
+def createDecoyFiles(n, size):
+    startPath = os.path.expanduser("~\inz tests")
+    for i in range (n):
+        decoy_name = "haslo{}.txt".format(i)
+        decoy_path = os.path.join(startPath, decoy_name)
+        decoy = open(decoy_path, "w")
+        decoy.write("x" * size)
+        decoy.close()
+
 def monitor():
     logging.basicConfig(handlers=[RotatingFileHandler('logs.log', maxBytes=100000, backupCount=10)],
                         level=logging.INFO,
@@ -147,10 +134,12 @@ def monitor():
     observer.start()
     try:
         while True:
+            #print("Monitoring")
             time.sleep(1)
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
                 
-createDecoyFiles(3)
+createDecoyFiles(1, 53687091)
+print("Decoys created")
 monitor()
