@@ -140,6 +140,6 @@ def monitor():
         observer.stop()
     observer.join()
                 
-createDecoyFiles(1, 53687091)
+createDecoyFiles(1, 100000)
 print("Decoys created")
 monitor()
