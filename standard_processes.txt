@@ -10,3 +10,6 @@ lsm.exe
 winlogon.exe
 explorer.exe
 onedrive.exe
+Explorer.EXE
+smartscreen.exe
+system

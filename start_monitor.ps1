@@ -1,0 +1,1 @@
+.\start-procmon.ps1 -filter "Path,is,C:\Users\Radoslaw Motyka\inz tests\haslo0.txt,Include" -Duration 10 -verbose
