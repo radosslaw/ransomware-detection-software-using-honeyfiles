@@ -13,3 +13,4 @@ onedrive.exe
 Explorer.EXE
 smartscreen.exe
 system
+SearchProtocolHost.exe

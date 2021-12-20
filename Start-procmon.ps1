@@ -338,5 +338,5 @@ if(($ImportCSVErr | measure).count -ne 0)
 	{Write-Warning "Final cleanup of temp files failed."}
 #>
 #Go back from whence we came and return fruits of our labor
-Pop-Location
-return $OutputObj
+#Pop-Location
+#return $OutputObj

@@ -1,1 +1,1 @@
-.\start-procmon.ps1 -filter "Path,is,C:\Users\Radoslaw Motyka\inz tests\haslo0.txt,Include" -Duration 10 -verbose
+.\start-procmon.ps1 -filter "Path,is,C:\Users\Radoslaw Motyka\Desktop\importantDocument.txt,Include;Path,is,C:\Users\Radoslaw Motyka\Documents\importantDocument.txt,Include;Path,is,C:\Users\Radoslaw Motyka\Downloads\importantDocument.txt,Include;Path,is,C:\Users\Radoslaw Motyka\inz tests\importantDocument.txt,Include" -Duration 10 -verbose
