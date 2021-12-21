@@ -234,9 +234,9 @@ function cleanup
 	else
 		{return 0}
 }
-#First check if process monitor is currently running.
-if((get-ProcmonRunningStatus) -eq "True")
-	{return "Error: Process Monitor already running."}
+#First check if process monitor is currently running, if yes - terminate.
+if((get-ProcmonRunningStatus) -eq "True") {
+	return "Error: Process Monitor already running."}
 
 #Check if running as admin
 if( -not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`

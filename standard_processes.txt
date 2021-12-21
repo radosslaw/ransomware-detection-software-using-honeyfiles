@@ -14,3 +14,4 @@ Explorer.EXE
 smartscreen.exe
 system
 SearchProtocolHost.exe
+MsMpEng.exe
